@@ -1,37 +1,37 @@
 #!/usr/bin/env python3
-"""Seventeen Syllables of Debugging — a make.fun competition entry."""
+"""Seventeen Syllables of Debugging — make.fun competition entry.
+
+Writes a debugging haiku (5-7-5 syllables) to /output/entry.txt.
+"""
 
 import os
-import stat
+import pathlib
 
 HAIKU = (
     "Cursor blinks at three\n"
     "a red dot waits on line nine\n"
-    "the bug was my code"
+    "the bug was my code\n"
 )
+
+OUTPUT_DIR = pathlib.Path("/output")
+OUTPUT_FILE = OUTPUT_DIR / "entry.txt"
+FALLBACK_DIR = pathlib.Path("./output")
+FALLBACK_FILE = FALLBACK_DIR / "entry.txt"
 
 
 def main() -> None:
-    # Pick writable output path: prefer /output, fall back to ./output
-    target_dir = "/output"
-    try:
-        os.makedirs(target_dir, exist_ok=True)
-        probe = os.path.join(target_dir, ".probe")
-        with open(probe, "w") as fh:
-            fh.write("")
-        os.remove(probe)
-    except (PermissionError, OSError):
-        target_dir = "./output"
+    # Try /output first; fall back to ./output if not writable
+    if OUTPUT_DIR.exists() and os.access(OUTPUT_DIR, os.W_OK):
+        out_dir = OUTPUT_DIR
+        out_file = OUTPUT_FILE
+    else:
+        out_dir = FALLBACK_DIR
+        out_file = FALLBACK_FILE
 
-    os.makedirs(target_dir, exist_ok=True)
-    path = os.path.join(target_dir, "entry.txt")
-
-    with open(path, "w") as fh:
-        fh.write(HAIKU + "\n")
-
-    os.chmod(path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IROTH)
-
-    print(f"Haiku written to {path}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_file.write_text(HAIKU)
+    out_file.chmod(0o644)
+    print(f"Haiku written to {out_file}")
 
 
 if __name__ == "__main__":
